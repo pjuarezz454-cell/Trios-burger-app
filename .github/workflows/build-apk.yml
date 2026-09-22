@@ -1,0 +1,51 @@
+name: Construir APK de Trios Burger
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ principal, main, master ]
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar proyecto
+        uses: actions/checkout@v4
+
+      - name: Descomprimir proyecto Trios Burger
+        run: |
+          unzip -q Trios_Burger_Cloud_APK.zip
+          cd trios_cloud
+          echo "Proyecto encontrado:"
+          ls -la
+
+      - name: Configurar Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Configurar Android
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar Android SDK
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Configurar Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.13'
+
+      - name: Compilar APK
+        working-directory: trios_cloud
+        run: gradle :app:assembleDebug --stacktrace
+
+      - name: Guardar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Trios-Burger-APK
+          path: trios_cloud/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
